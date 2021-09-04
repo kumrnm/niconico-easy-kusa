@@ -29,9 +29,9 @@
     }
 
     function addCSS(cssText) {
-        const elm = document.createElement("style");
-        elm.textContent = cssText;
-        document.head.appendChild(elm);
+        const styleElement = document.createElement("style");
+        styleElement.textContent = cssText;
+        document.head.appendChild(styleElement);
     }
 
     function createCommentButton(text) {
@@ -49,10 +49,10 @@
     }
 
     function createTextDisplay(text) {
-        const elm = document.createElement("pre");
-        elm.classList.add(SCRIPT_NAME + "-pre");
-        elm.textContent = text;
-        return elm;
+        const element = document.createElement("pre");
+        element.classList.add(SCRIPT_NAME + "-pre");
+        element.textContent = text;
+        return element;
     }
 
     async function sendComment(text) {
