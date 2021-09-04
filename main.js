@@ -12,11 +12,26 @@
 (() => {
     "use strict";
 
-    init();
+    const SCRIPT_NAME = "NiconicoEasyKusa";
 
     function init() {
+        addCSS(`
+.${SCRIPT_NAME}-pre {
+    display: inline;
+    font: inherit;
+    margin: 0;
+    padding: 0;
+}
+        `);
+
         const container = document.querySelector(".EasyCommentContainer-easyComments");
-        container.append(createCommentButton("草"));
+        container.appendChild(createCommentButton("草"));
+    }
+
+    function addCSS(cssText) {
+        const elm = document.createElement("style");
+        elm.textContent = cssText;
+        document.head.appendChild(elm);
     }
 
     function createCommentButton(text) {
@@ -25,12 +40,19 @@
         button.classList.add("EasyCommentButton");
         const caption = document.createElement("div");
         caption.classList.add("EasyCommentButton-caption");
-        caption.textContent = text;
-        button.append(caption);
+        caption.appendChild(createTextDisplay(text));
+        button.appendChild(caption);
 
         button.addEventListener("click", () => sendComment(text));
 
         return button;
+    }
+
+    function createTextDisplay(text) {
+        const elm = document.createElement("pre");
+        elm.classList.add(SCRIPT_NAME + "-pre");
+        elm.textContent = text;
+        return elm;
     }
 
     async function sendComment(text) {
@@ -51,7 +73,7 @@
 
         document.querySelector(".CommentPostButton").click();
 
-        await wait(2);
+        await wait(1);
 
         commandInput.value = command0;
         commentInput.value = comment0;
@@ -74,5 +96,7 @@
     async function wait(frames) {
         for (let i = 0; i < frames; ++i) await animationFramePromise();
     }
+
+    init();
 
 })();
