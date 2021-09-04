@@ -6,7 +6,7 @@
 // @author       蝙蝠の目
 // @license      MIT
 // @supportURL   https://twitter.com/intent/tweet?screen_name=kumrnm
-// @match        https://nicovideo.jp/watch/*
+// @match        https://www.nicovideo.jp/watch/*
 // ==/UserScript==
 
 (() => {
