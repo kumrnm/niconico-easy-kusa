@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Niconico Easy Kusa
 // @namespace    https://greasyfork.org/ja/users/808813
-// @version      1.0
+// @version      1.1
 // @description  ニコニコ動画のかんたんコメントをカスタマイズします。
 // @author       蝙蝠の目
 // @license      MIT
