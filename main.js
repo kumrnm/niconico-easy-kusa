@@ -1,9 +1,11 @@
 // ==UserScript==
-// @name         Niconico Easy Kusa
-// @version      1.1.1
+// @name         疑似かんたんコメント
+// @version      1.0.1
 // @description  ニコニコ動画のかんたんコメントをカスタマイズします。
 // @author       蝙蝠の目
+// @license      MIT
 // @match        https://www.nicovideo.jp/watch/*
+// @namespace    https://greasyfork.org/ja/users/808813
 // ==/UserScript==
 
 (() => {
@@ -57,6 +59,7 @@
 }
         `);
 
+        initWideMode();
         addEditPanel();
 
         for (const comment of storedData.getAllComments()) {
@@ -70,6 +73,33 @@
         const styleElement = document.createElement("style");
         styleElement.textContent = cssText;
         document.head.appendChild(styleElement);
+    }
+
+    function initWideMode() {
+        addCSS(`
+.MainContainer-playerPanel {
+    border-bottom: 1px solid #ddd;
+}
+.EasyCommentContainer {
+    margin-top: 0;
+}
+        `);
+
+        const div = document.createElement("div");
+        document.querySelector(".MainContainer-playerPanel").insertAdjacentElement(
+            "afterend",
+            div
+        );
+
+        const section = document.querySelector(".EasyCommentContainer");
+        div.append(section);
+
+        function onResize() {
+            document.querySelector(".MainContainer-playerPanel").style.height =
+                `${document.querySelector(".MainContainer-player").getClientRects()[0].height}px`;
+        }
+        onResize();
+        window.addEventListener("resize", onResize);
     }
 
     function addEditPanel() {
