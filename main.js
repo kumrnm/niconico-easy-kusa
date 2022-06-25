@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         疑似かんたんコメント
-// @version      1.0.1
+// @version      1.1.0
 // @description  ニコニコ動画のかんたんコメントをカスタマイズします。
 // @author       蝙蝠の目
 // @license      MIT
@@ -11,7 +11,7 @@
 (() => {
     "use strict";
 
-    const SCRIPT_NAME = "NiconicoEasyKusa";
+    const SCRIPT_NAME = "NiconicoPseudoKantanComment";
 
     function init() {
         addCSS(`
@@ -32,6 +32,7 @@
 }
 .EasyCommentContainer-easyComments {
     white-space: normal;
+    padding: 0 12px;
 }
 .${SCRIPT_NAME}-pre {
     display: inline;
@@ -59,7 +60,9 @@
 }
         `);
 
-        initWideMode();
+        migrateFromNiconicoEasyKusa();
+        if (storedData.wideMode) initWideMode();
+        if (storedData.hideDefaultComment) hideDefaultComment();
         addEditPanel();
 
         for (const comment of storedData.getAllComments()) {
@@ -72,7 +75,43 @@
     function addCSS(cssText) {
         const styleElement = document.createElement("style");
         styleElement.textContent = cssText;
+        styleElement.setAttribute("data-owner-script", SCRIPT_NAME);
         document.head.appendChild(styleElement);
+    }
+
+    function migrateFromNiconicoEasyKusa() {
+        addCSS(`
+.NiconicoEasyKusa-editButtonContainer,
+.NiconicoEasyKusa-EasyCommentButton
+{
+    display: none;
+}
+
+.${SCRIPT_NAME}-EasyKusaWarning {
+    padding: 4px;
+    background-color: #fcc;
+    color: #900;
+}
+.${SCRIPT_NAME}-EasyKusaWarning a {
+    color: inherit;
+    text-decoration: underline;
+}
+        `);
+
+        // NiconicoEasyKusaが存在するときに警告を表示する
+        window.setTimeout(() => {
+            if (document.querySelector(".NiconicoEasyKusa-editButtonContainer")) {
+                const warningDiv = document.createElement("div");
+                warningDiv.classList.add(`${SCRIPT_NAME}-EasyKusaWarning`);
+                document.querySelector(".MainContainer-floatingPanel").insertAdjacentElement(
+                    "beforebegin",
+                    warningDiv
+                );
+                warningDiv.innerHTML = `
+<a href="https://greasyfork.org/ja/scripts/447009" target="_blank" rel="noopener noreferrer">疑似かんたんコメント</a> と <a href="https://greasyfork.org/ja/scripts/431904" target="_blank" rel="noopener noreferrer">Niconico Easy Kusa</a> の共存は非推奨です。Niconico Easy Kusa をアンインストールしてください（設定は引き継がれます）。
+                `;
+            }
+        }, 100);
     }
 
     function initWideMode() {
@@ -85,14 +124,15 @@
 }
         `);
 
-        const div = document.createElement("div");
-        document.querySelector(".MainContainer-playerPanel").insertAdjacentElement(
-            "afterend",
-            div
+        const easyCommentPanel = document.createElement("div");
+        easyCommentPanel.classList.add(`${SCRIPT_NAME}-EasyCommentPanel`);
+        document.querySelector(".MainContainer-floatingPanel").insertAdjacentElement(
+            "beforebegin",
+            easyCommentPanel
         );
 
-        const section = document.querySelector(".EasyCommentContainer");
-        div.append(section);
+        const easyCommentSection = document.querySelector(".EasyCommentContainer");
+        easyCommentPanel.append(easyCommentSection);
 
         function onResize() {
             document.querySelector(".MainContainer-playerPanel").style.height =
@@ -100,6 +140,14 @@
         }
         onResize();
         window.addEventListener("resize", onResize);
+    }
+
+    function hideDefaultComment() {
+        addCSS(`
+.EasyCommentButton:not(.${SCRIPT_NAME}-EasyCommentButton) {
+    display: none;
+}
+        `);
     }
 
     function addEditPanel() {
@@ -166,6 +214,16 @@
         span1.appendChild(createButton("削除完了", () => setMode(0)));
 
         captionElement.appendChild(span1);
+
+        // 右クリックでコンフィグ（暫定）
+        addButton.addEventListener("contextmenu", e => {
+            e.preventDefault();
+            openConfigEditor();
+        });
+        deleteButton.addEventListener("contextmenu", e => {
+            e.preventDefault();
+            openConfigEditor();
+        });
     }
 
     function addCommentButton(text, saving = true) {
@@ -291,23 +349,43 @@
         }
     }
 
+    function openConfigEditor() {
+        function confirmBoolean(name, currentValue) {
+            return window.confirm(
+                `[疑似かんたんコメント]
+「${name}」を有効にしますか？（現在の設定: ${currentValue ? "有効" : "無効"}）
+
+※ 設定の変更はページ再読み込み後に反映されます。`
+            );
+        }
+        storedData.wideMode = confirmBoolean("ワイドモード", storedData.wideMode);
+        storedData.hideDefaultComment = confirmBoolean("既定コメント非表示", storedData.hideDefaultComment);
+        storedData._save();
+    }
+
     class StoredData {
         constructor(localStorageKey) {
             this.localStorageKey = localStorageKey;
             this.comments = new Set(["草"]);
+            this.wideMode = true;
+            this.hideDefaultComment = false;
             this._load();
         }
 
         _encodeToString() {
             return JSON.stringify({
                 version: 1,
-                comments: [...this.comments]
+                comments: [...this.comments],
+                wideMode: this.wideMode,
+                hideDefaultComment: this.hideDefaultComment,
             });
         }
 
         _decodeFromString(str) {
             const data = JSON.parse(str);
             this.comments = new Set(data.comments);
+            if ("wideMode" in data) this.wideMode = data.wideMode;
+            if ("hideDefaultComment" in data) this.hideDefaultComment = data.hideDefaultComment;
         }
 
         _load() {
@@ -352,7 +430,8 @@
         }
     }
 
-    const storedData = new StoredData(`${SCRIPT_NAME}-data`);
+    // NiconicoEasyKusaとの互換性のために共通のデータを使用する
+    const storedData = new StoredData(`NiconicoEasyKusa-data`);
 
     init();
 
